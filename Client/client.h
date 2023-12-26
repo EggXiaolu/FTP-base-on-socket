@@ -6,19 +6,21 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-#include <dirent.h> 
+#include <dirent.h>
 
-
+#define ADDRESS "127.0.0.1"
+#define PORT 5555
 #define MAX_LENGTH 512
 #define DSK "./dsk_client/"
 
-int send_file(int socket, char* fname);
-int receive_file(int socket,char* fname);
+int send_file(int socket, char *fname);
+int receive_file(int socket, char *fname);
 
-void put_file(int socket,char* fname);
-void get_file(int socket, char* fname);
+void put_file(int socket, char *fname);
+void get_file(int socket, char *fname);
 
-int error(char *err){
+int error(char *err)
+{
 	perror(err);
 	exit(EXIT_FAILURE);
 }

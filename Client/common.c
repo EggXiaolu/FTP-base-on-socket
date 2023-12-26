@@ -18,11 +18,11 @@ void hello()
 void help()
 {
     printf("commands:\n"
-           "PUT  <filename> --上传指定文件\n"
-           "GET  <filename> --下载指定文件\n"
-           "MPUT <filename> --上传指定后缀文件\n"
-           "MGET <filename> --下载指定后缀文件\n"
-           "EXIT            --退出程序\n");
+           "    PUT  <filename> --上传指定文件\n"
+           "    GET  <filename> --下载指定文件\n"
+           "    MPUT <filename> --上传指定后缀文件\n"
+           "    MGET <filename> --下载指定后缀文件\n"
+           "    EXIT            --退出程序\n");
 }
 
 int fileExist(char *fname)

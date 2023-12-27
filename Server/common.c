@@ -33,6 +33,7 @@ int receive_file(int socket, char *fname)
     FILE *out_file = fopen(fpath, "wb");
     if (out_file == NULL)
     {
+        return 0;
     }
     else
     {
@@ -110,6 +111,8 @@ void put_file(int accept_sockfd, char *fname)
     send(accept_sockfd, buffer, MAX_LENGTH, 0);
     if (receive_file(accept_sockfd, fname))
     {
+
+        printf("上传成功！\n");
         bzero(buffer, MAX_LENGTH);
         strcpy(buffer, "SUCCESS");
         send(accept_sockfd, buffer, MAX_LENGTH, 0);

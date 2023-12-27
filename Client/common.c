@@ -127,7 +127,7 @@ void put_file(int socket, char *fname)
     else
     {
         // 文件重复
-        printf("文件已存在! \n你想要覆盖%s吗 ? (yes/no)\n", fname);
+        printf("%s已存在! \n你想要覆盖吗 ? (yes/no)\n", fname);
         bzero(buffer, MAX_LENGTH);
         fgets(buffer, MAX_LENGTH, stdin);
         buffer[strcspn(buffer, "\n")] = 0;
@@ -190,14 +190,13 @@ void put_m_file(int socket, char *fext)
     DIR *di;
     struct dirent *dir;
     di = opendir(DSK);
-    if ((dir = readdir(di)) == NULL)
-    {
-        printf("无目标文件\n");
-        return;
-    }
+    // if ((dir = readdir(di)) == NULL)
+    // {
+    //     printf("无目标文件\n");
+    //     return;
+    // }
     while ((dir = readdir(di)) != NULL)
     {
-        // 遍历文件夹
         char *fname = dir->d_name;
         char *ext = strrchr(fname, '.');
         if (strcmp(ext, fext) == 0)

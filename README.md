@@ -1,8 +1,8 @@
 ## 功能
-1. put <filename> 上传文件 
-2. get <filename> 下载文件
-3. mput <ext> 上传指定后缀文件
-4. mget <ext> 下载指定后缀文件
+1. put < filename > 上传文件 
+2. get < filename > 下载文件
+3. mput < ext > 上传指定后缀文件
+4. mget < ext > 下载指定后缀文件
 
 ## 使用
 编译

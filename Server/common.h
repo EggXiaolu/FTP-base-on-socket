@@ -28,5 +28,6 @@ int receive_file(int socket, char *fname);
 int send_file(int socket, char *fname);
 // 查找文件
 int fileExist(char *fname);
-
+// 删除文件
+void remove_file(int socket, char *fname);
 void error(char *err);

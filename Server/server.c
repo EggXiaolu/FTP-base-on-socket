@@ -1,10 +1,9 @@
 #include "common.h"
-
+char buffer[MAX_LENGTH];
 // 子线程
 void *service(void *sock_fd)
 {
     int accept_sockfd = *((int *)sock_fd);
-    char buffer[MAX_LENGTH];
     bzero(buffer, MAX_LENGTH);
     while (1)
     {
@@ -43,6 +42,12 @@ void *service(void *sock_fd)
             // cmd = strtok(NULL, " ");
             // put_m_file(accept_sockfd, cmd);
         }
+        else if (strcmp(cmd, "RREMOVE") == 0 || strcmp(cmd, "rremove") == 0)
+        {
+            // 删除文件
+            cmd = strtok(NULL, " ");
+            remove_file(accept_sockfd, cmd);
+        }
         else
         {
             continue;
@@ -77,9 +82,17 @@ int main()
     // 循环创建线程
     while (1)
     {
+        bzero(buffer, MAX_LENGTH);
+        fgets(buffer, MAX_LENGTH, stdin);
+        buffer[strcspn(buffer, "\n")] = 0;
+        if (strcmp(buffer, "exit") == 0)
+        {
+            break;
+        }
         int accept_sockfd;
         int addr_len = sizeof(client_addr);
-
+        fflush(stdin);
+        
         if ((accept_sockfd = accept(server_sock, (struct sockaddr *)&client_addr, (socklen_t *)&addr_len)) < 0)
             error("accept");
 
@@ -87,7 +100,7 @@ int main()
         if (pthread_create(&thread, NULL, service, (void *)&accept_sockfd) != 0)
             error("线程创建失败");
 
-        pthread_detach(thread); // 可能需要调整线程的管理方式，如join等
+        // pthread_detach(thread); // 可能需要调整线程的管理方式，如join等
     }
     close(server_sock);
 

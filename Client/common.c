@@ -18,11 +18,13 @@ void hello()
 void help()
 {
     printf("commands:\n"
-           "    PUT  <filename> --上传指定文件\n"
-           "    GET  <filename> --下载指定文件\n"
-           "    MPUT <filename> --上传指定后缀文件\n"
-           "    MGET <filename> --下载指定后缀文件\n"
-           "    EXIT            --退出程序\n");
+           "    put  <filename>    --上传指定文件\n"
+           "    get  <filename>    --下载指定文件\n"
+           "    mget <filename>    --上传指定后缀文件\n"
+           "    mput <filename>    --下载指定后缀文件\n"
+           "    lremove <filename> --删除本地文件\n"
+           "    rremove <filename> --删除远程文件\n"
+           "    EXIT               --退出程序\n");
 }
 
 int fileExist(char *fname)
@@ -41,6 +43,63 @@ int fileExist(char *fname)
     }
     closedir(di);
     return found;
+}
+
+void remove_local_file(char *fname)
+{
+    if (!fileExist(fname))
+    {
+        printf("%s不存在\n", fname);
+        return;
+    }
+    printf("确定要删除本地文件%s?(yes/no):", fname);
+    bzero(buffer, MAX_LENGTH);
+    fgets(buffer, MAX_LENGTH, stdin);
+    buffer[strcspn(buffer, "\n")] = 0;
+    if (strcmp(buffer, "yes") != 0)
+    {
+        return;
+    }
+    char fpath[MAX_LENGTH];
+    strcpy(fpath, DSK);
+    fname = strcat(fpath, fname);
+    if (remove(fname) == -1)
+    {
+        printf("%s删除失败\n", fname);
+        return;
+    }
+    printf("%s删除成功\n", fname);
+}
+
+void remove_remote_file(int socket, char *fname)
+{
+    send(socket, buffer, MAX_LENGTH, 0);
+    bzero(buffer, MAX_LENGTH);
+    recv(socket, buffer, MAX_LENGTH, 0);
+    if (strcmp(buffer, "NOTFOUND") == 0)
+    {
+        printf("%s不存在\n", fname);
+        return;
+    }
+
+    printf("确定要删除远程文件%s?(yes/no):", fname);
+    bzero(buffer, MAX_LENGTH);
+    fgets(buffer, MAX_LENGTH, stdin);
+    buffer[strcspn(buffer, "\n")] = 0;
+    if (strcmp(buffer, "yes") != 0)
+    {
+        return;
+    }
+    send(socket, buffer, MAX_LENGTH, 0);
+
+    bzero(buffer, MAX_LENGTH);
+    recv(socket, buffer, MAX_LENGTH, 0);
+    if (strcmp(buffer, "SUCCESS") != 0)
+    {
+        printf("%s删除失败\n", fname);
+        return;
+    }
+    printf("%s删除成功\n", fname);
 }
 
 int send_file(int socket, char *fname)
@@ -66,12 +125,12 @@ int send_file(int socket, char *fname)
         }
         bzero(buffer, MAX_LENGTH);
     }
+
     return 1;
 }
 
 int receive_file(int socket, char *fname)
 {
-    char buffer[MAX_LENGTH] = {0};
     char fpath[MAX_LENGTH];
     strcpy(fpath, DSK);
     strcat(fpath, fname);
@@ -100,7 +159,7 @@ int receive_file(int socket, char *fname)
         {
             return 0;
         }
-        printf("文件写入成功\n\n");
+        printf("%s下载成功\n\n", fname);
         fclose(out_file);
     }
     return 1;
@@ -147,17 +206,18 @@ void put_file(int socket, char *fname)
     recv(socket, buffer, MAX_LENGTH, 0);
     if (strcmp(buffer, "SUCCESS"))
     {
-        printf("上传失败，请再次尝试！\n");
+        printf("%s上传失败，请再次尝试！\n", fname);
     }
     else
     {
-        printf("文件上传完成! \n\n");
+        printf("%s上传完成!\n\n", fname);
     }
 }
 
 void get_file(int socket, char *fname)
 {
     // 向服务器发送请求
+
     send(socket, buffer, MAX_LENGTH, 0);
     bzero(buffer, MAX_LENGTH);
     recv(socket, buffer, MAX_LENGTH, 0);
@@ -166,7 +226,7 @@ void get_file(int socket, char *fname)
     {
         if (fileExist(fname))
         {
-            printf("文件已存在! \n你想要覆盖%s吗 ? (yes/no)\n", fname);
+            printf("%s已存在! \n你想要覆盖吗 ? (yes/no)\n", fname);
             bzero(buffer, MAX_LENGTH);
             fgets(buffer, MAX_LENGTH, stdin);
             buffer[strcspn(buffer, "\n")] = 0;
@@ -181,7 +241,7 @@ void get_file(int socket, char *fname)
     }
     else
     {
-        printf("%s未找到！\n", fname);
+        printf("%s不存在！\n", fname);
     }
 }
 
@@ -190,11 +250,6 @@ void put_m_file(int socket, char *fext)
     DIR *di;
     struct dirent *dir;
     di = opendir(DSK);
-    // if ((dir = readdir(di)) == NULL)
-    // {
-    //     printf("无目标文件\n");
-    //     return;
-    // }
     while ((dir = readdir(di)) != NULL)
     {
         char *fname = dir->d_name;

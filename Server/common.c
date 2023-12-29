@@ -1,5 +1,5 @@
 #include "common.h"
-
+extern char buffer[MAX_LENGTH];
 void error(char *err)
 {
     perror(err);
@@ -24,9 +24,41 @@ int fileExist(char *fname)
     return found;
 }
 
+void remove_file(int socket, char *fname)
+{
+    if (!fileExist(fname))
+    {
+        bzero(buffer, MAX_LENGTH);
+        strcpy(buffer, "NOTFOUND");
+        send(socket, buffer, MAX_LENGTH, 0);
+        return;
+    }
+    bzero(buffer, MAX_LENGTH);
+    strcpy(buffer, "READY");
+    send(socket, buffer, MAX_LENGTH, 0);
+
+    bzero(buffer, MAX_LENGTH);
+    recv(socket, buffer, MAX_LENGTH, 0);
+    if (strcmp(buffer, "yes") != 0)
+    {
+        return;
+    }
+    char fpath[MAX_LENGTH];
+    strcpy(fpath, DSK);
+    fname = strcat(fpath, fname);
+    bzero(buffer, MAX_LENGTH);
+    if (remove(fname) == -1)
+    {
+        strcpy(buffer, "FAIL");
+        send(socket, buffer, MAX_LENGTH, 0);
+        return;
+    }
+    strcpy(buffer, "SUCCESS");
+    send(socket, buffer, MAX_LENGTH, 0);
+}
+
 int receive_file(int socket, char *fname)
 {
-    char buffer[MAX_LENGTH] = {0};
     char fpath[MAX_LENGTH];
     strcpy(fpath, DSK);
     strcat(fpath, fname);
@@ -65,7 +97,6 @@ int receive_file(int socket, char *fname)
 
 int send_file(int socket, char *fname)
 {
-    char buffer[MAX_LENGTH] = {0};
     char fpath[MAX_LENGTH];
     strcpy(fpath, DSK);
     strcat(fpath, fname);
@@ -88,18 +119,17 @@ int send_file(int socket, char *fname)
     return 1;
 }
 
-void put_file(int accept_sockfd, char *fname)
+void put_file(int socket, char *fname)
 {
-    char buffer[MAX_LENGTH];
     if (fileExist(fname))
     {
         // 文件重复
         bzero(buffer, MAX_LENGTH);
         strcpy(buffer, "CONTINUE");
-        send(accept_sockfd, buffer, MAX_LENGTH, 0);
+        send(socket, buffer, MAX_LENGTH, 0);
 
         bzero(buffer, MAX_LENGTH);
-        recv(accept_sockfd, buffer, MAX_LENGTH, 0);
+        recv(socket, buffer, MAX_LENGTH, 0);
         if (strcmp(buffer, "yes") != 0)
         {
             // 否定覆盖
@@ -108,30 +138,28 @@ void put_file(int accept_sockfd, char *fname)
     }
     bzero(buffer, MAX_LENGTH);
     strcpy(buffer, "OKAY");
-    send(accept_sockfd, buffer, MAX_LENGTH, 0);
-    if (receive_file(accept_sockfd, fname))
+    send(socket, buffer, MAX_LENGTH, 0);
+    if (receive_file(socket, fname))
     {
 
-        printf("上传成功！\n");
         bzero(buffer, MAX_LENGTH);
         strcpy(buffer, "SUCCESS");
-        send(accept_sockfd, buffer, MAX_LENGTH, 0);
+        send(socket, buffer, MAX_LENGTH, 0);
     }
 }
 
-void get_file(int accept_sockfd, char *fname)
+void get_file(int socket, char *fname)
 {
-    char buffer[MAX_LENGTH];
     if (fileExist(fname))
     {
         bzero(buffer, MAX_LENGTH);
         strcpy(buffer, "READY");
-        send(accept_sockfd, buffer, MAX_LENGTH, 0);
-        recv(accept_sockfd, buffer, MAX_LENGTH, 0);
+        send(socket, buffer, MAX_LENGTH, 0);
+        recv(socket, buffer, MAX_LENGTH, 0);
         if (strcmp(buffer, "yes") == 0)
         {
             // 确定传输
-            send_file(accept_sockfd, fname);
+            send_file(socket, fname);
         }
         else
         {
@@ -143,7 +171,7 @@ void get_file(int accept_sockfd, char *fname)
     {
         bzero(buffer, MAX_LENGTH);
         strcpy(buffer, "CANCEL");
-        send(accept_sockfd, buffer, MAX_LENGTH, 0);
+        send(socket, buffer, MAX_LENGTH, 0);
     }
 }
 
@@ -151,9 +179,8 @@ void put_m_file(int socket, char *fext)
 {
 }
 
-void get_m_file(int accept_sockfd, char *fext)
+void get_m_file(int socket, char *fext)
 {
-    char buffer[MAX_LENGTH];
     DIR *di;
     struct dirent *dir;
     di = opendir(DSK);
@@ -170,9 +197,9 @@ void get_m_file(int accept_sockfd, char *fext)
         {
             bzero(buffer, MAX_LENGTH);
             strcpy(buffer, fname);
-            send(accept_sockfd, buffer, MAX_LENGTH, 0);
+            send(socket, buffer, MAX_LENGTH, 0);
             bzero(buffer, MAX_LENGTH);
-            recv(accept_sockfd, buffer, MAX_LENGTH, 0);
+            recv(socket, buffer, MAX_LENGTH, 0);
             if (strcmp(buffer, "SKIP") == 0)
             {
                 continue;
@@ -180,12 +207,12 @@ void get_m_file(int accept_sockfd, char *fext)
             else if (strcmp(buffer, "SEND") == 0)
             {
                 bzero(buffer, MAX_LENGTH);
-                send_file(accept_sockfd, fname);
+                send_file(socket, fname);
             }
         }
     }
     bzero(buffer, MAX_LENGTH);
     strcpy(buffer, "OVER");
-    send(accept_sockfd, buffer, MAX_LENGTH, 0);
+    send(socket, buffer, MAX_LENGTH, 0);
     closedir(di);
 }

@@ -23,9 +23,7 @@ int main()
 	{
 		hello();
 		printf("请输入指令(详情输入help):");
-		bzero(buffer, MAX_LENGTH);
-		fgets(buffer, MAX_LENGTH, stdin);
-		buffer[strcspn(buffer, "\n")] = 0;
+		
 
 		char cmd_line[MAX_LENGTH];
 		strcpy(cmd_line, buffer);
@@ -55,13 +53,25 @@ int main()
 			cmd = strtok(NULL, " ");
 			get_m_file(client_sock, cmd);
 		}
-		else if (strcmp("EXIT", buffer) == 0 || strcmp("exit", buffer) == 0)
+		else if (strcmp("EXIT", cmd) == 0 || strcmp("exit", cmd) == 0)
 		{
 			// 上传指定后缀文件
 			send(client_sock, buffer, MAX_LENGTH, 0);
 			break;
 		}
-		else if (strcmp("HELP", buffer) == 0 || strcmp("help", buffer) == 0)
+		else if (strcmp("LREMOVE", cmd) == 0 || strcmp("lremove", cmd) == 0)
+		{
+			// 删除本地文件
+			cmd = strtok(NULL, " ");
+			remove_local_file(cmd);
+		}
+		else if (strcmp("RREMOVE", cmd) == 0 || strcmp("rremove", cmd) == 0)
+		{
+			// 删除本地文件
+			cmd = strtok(NULL, " ");
+			remove_remote_file(client_sock, cmd);
+		}
+		else if (strcmp("HELP", cmd) == 0 || strcmp("help", cmd) == 0)
 		{
 			help();
 		}
